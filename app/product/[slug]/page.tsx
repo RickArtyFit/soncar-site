@@ -4,31 +4,40 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getProduct, type Product } from "@/lib/products";
 
-// Next.js expects string here
+// Next.js passes string params; we'll narrow them safely.
 type PageProps = {
   params: { slug: string };
 };
 
-// Helper to narrow a string to our known slugs
-function isSlug(s: string): s is Product["slug"] {
-  return ["freyjas-bloom", "duemmens-nectar", "loki-hell-fire"].includes(s as any);
+// Known slugs (no `any` needed)
+const SLUGS = ["freyjas-bloom", "duemmens-nectar", "loki-hell-fire"] as const;
+type Slug = typeof SLUGS[number];
+
+function isSlug(s: string): s is Slug {
+  // cast SLUGS to readonly string[] for .includes without 'any'
+  return (SLUGS as readonly string[]).includes(s);
 }
 
-// Optional per-product SEO (safe guards included)
+// Optional per-product SEO
 export function generateMetadata({ params }: PageProps): Metadata {
   if (!isSlug(params.slug)) return { title: "Product | SONCAR" };
-  const p = getProduct(params.slug);
+  const p = getProduct(params.slug as Product["slug"]);
   if (!p) return { title: "Product not found | SONCAR" };
   return {
     title: `${p.name} | RAGNAROK by SONCAR`,
     description: p.blurb,
-    openGraph: { title: `${p.name} | RAGNAROK by SONCAR`, description: p.blurb, images: [{ url: p.image }] },
+    openGraph: {
+      title: `${p.name} | RAGNAROK by SONCAR`,
+      description: p.blurb,
+      images: [{ url: p.image }],
+    },
   };
 }
 
 export default function ProductPage({ params }: PageProps) {
   if (!isSlug(params.slug)) return notFound();
-  const p = getProduct(params.slug);
+
+  const p = getProduct(params.slug as Product["slug"]);
   if (!p) return notFound();
 
   return (
