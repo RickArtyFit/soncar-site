@@ -42,6 +42,13 @@ export default function Footer() {
       <div className="border-t border-white/10 py-6 text-xs text-neutral-500 text-center">
         © {new Date().getFullYear()} SONCAR Limited · <a href="https://soncar.co.uk" className="hover:text-white">soncar.co.uk</a> · All rights reserved.
       </div>
+{/* Discreet admin link (screen-reader only unless focused) */}
+<a
+  href="/admin"
+  className="sr-only focus:not-sr-only block text-center text-neutral-600 hover:text-white text-xs mt-2"
+>
+  Admin
+</a>
     </footer>
   );
 }
