@@ -6,12 +6,23 @@ import { getProduct, type Product } from "@/lib/products";
 // Known slugs
 const SLUGS = ["freyjas-bloom", "duemmens-nectar", "loki-hell-fire"] as const;
 type Slug = typeof SLUGS[number];
-const isSlug = (s: unknown): s is Slug =>
-  typeof s === "string" && (SLUGS as readonly string[]).includes(s);
 
-export default function ProductPage({ params }) {
-  // Next supplies `params` at runtime; we guard it safely:
-  const slug = typeof params?.slug === "string" ? params.slug : undefined;
+function isSlug(s: unknown): s is Slug {
+  return typeof s === "string" && (SLUGS as readonly string[]).includes(s);
+}
+
+export default function ProductPage(props: unknown) {
+  // Safely extract params.slug without 'any'
+  const params =
+    props && typeof props === "object" && "params" in props
+      ? (props as { params?: unknown }).params
+      : undefined;
+
+  const slug =
+    params && typeof params === "object" && "slug" in params
+      ? (params as { slug?: unknown }).slug
+      : undefined;
+
   if (!isSlug(slug)) return notFound();
 
   const p = getProduct(slug as Product["slug"]);
