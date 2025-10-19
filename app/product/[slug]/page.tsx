@@ -4,26 +4,30 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getProduct, type Product } from "@/lib/products";
 
+// Next.js expects string here
 type PageProps = {
-  params: { slug: Product["slug"] };
+  params: { slug: string };
 };
 
-// Optional: nice per-product SEO
+// Helper to narrow a string to our known slugs
+function isSlug(s: string): s is Product["slug"] {
+  return ["freyjas-bloom", "duemmens-nectar", "loki-hell-fire"].includes(s as any);
+}
+
+// Optional per-product SEO (safe guards included)
 export function generateMetadata({ params }: PageProps): Metadata {
+  if (!isSlug(params.slug)) return { title: "Product | SONCAR" };
   const p = getProduct(params.slug);
   if (!p) return { title: "Product not found | SONCAR" };
   return {
     title: `${p.name} | RAGNAROK by SONCAR`,
     description: p.blurb,
-    openGraph: {
-      title: `${p.name} | RAGNAROK by SONCAR`,
-      description: p.blurb,
-      images: [{ url: p.image }],
-    },
+    openGraph: { title: `${p.name} | RAGNAROK by SONCAR`, description: p.blurb, images: [{ url: p.image }] },
   };
 }
 
 export default function ProductPage({ params }: PageProps) {
+  if (!isSlug(params.slug)) return notFound();
   const p = getProduct(params.slug);
   if (!p) return notFound();
 
