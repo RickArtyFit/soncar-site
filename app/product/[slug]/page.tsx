@@ -9,8 +9,16 @@ type Slug = typeof SLUGS[number];
 const isSlug = (s: unknown): s is Slug =>
   typeof s === "string" && (SLUGS as readonly string[]).includes(s);
 
-export default function ProductPage({ params }: any) {
-  const slug = params?.slug;
+export default function ProductPage(
+  { params }: { params: unknown } // <- no `any`
+) {
+  const slug =
+    params &&
+    typeof params === "object" &&
+    "slug" in params
+      ? (params as { slug: unknown }).slug
+      : undefined;
+
   if (!isSlug(slug)) return notFound();
 
   const p = getProduct(slug as Product["slug"]);
