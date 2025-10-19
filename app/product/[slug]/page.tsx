@@ -2,17 +2,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getProduct, type Product } from "@/lib/products";
+import { getProductBlurb } from "@/lib/cms"; // ← Redis-backed blurb
 
-// Known slugs
+// Known slugs – used to safely narrow the dynamic route param
 const SLUGS = ["freyjas-bloom", "duemmens-nectar", "loki-hell-fire"] as const;
 type Slug = typeof SLUGS[number];
-
 function isSlug(s: unknown): s is Slug {
   return typeof s === "string" && (SLUGS as readonly string[]).includes(s);
 }
 
-export default function ProductPage(props: unknown) {
-  // Safely extract params.slug without 'any'
+// Server Component (async) so we can await Redis reads
+export default async function ProductPage(props: unknown) {
+  // Safely extract params.slug without triggering Next's PageProps type clash
   const params =
     props && typeof props === "object" && "params" in props
       ? (props as { params?: unknown }).params
@@ -25,8 +26,12 @@ export default function ProductPage(props: unknown) {
 
   if (!isSlug(slug)) return notFound();
 
+  // Look up the static product, then override fields from Redis as needed
   const p = getProduct(slug as Product["slug"]);
   if (!p) return notFound();
+
+  // Pull the editable blurb from Redis; fall back to code default
+  const blurb = await getProductBlurb(p.slug, p.blurb);
 
   return (
     <main className="bg-neutral-950 text-neutral-100 min-h-screen">
@@ -41,16 +46,23 @@ export default function ProductPage(props: unknown) {
             priority
           />
         </div>
+
         <div>
           <h1 className="text-3xl font-semibold">{p.name}</h1>
-          <div className="mt-2 text-neutral-300">{p.blurb}</div>
+          <div className="mt-2 text-neutral-300">{blurb}</div>
           <div className="mt-4 text-xl font-semibold">£{p.price.toFixed(2)}</div>
 
           <div className="mt-6 flex gap-3">
-            <Link href={`/cart?add=${p.slug}`} className="px-4 py-2 rounded bg-white/10 hover:bg-white/20">
+            <Link
+              href={`/cart?add=${p.slug}`}
+              className="px-4 py-2 rounded bg-white/10 hover:bg-white/20"
+            >
               Add to cart
             </Link>
-            <Link href="/#shop" className="px-4 py-2 rounded bg-white/5 hover:bg-white/10">
+            <Link
+              href="/#shop"
+              className="px-4 py-2 rounded bg-white/5 hover:bg-white/10"
+            >
               Back to shop
             </Link>
           </div>
