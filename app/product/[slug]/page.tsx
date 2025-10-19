@@ -4,22 +4,21 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getProduct, type Product } from "@/lib/products";
 
-// Next.js passes string params; we'll narrow them safely.
-type PageProps = {
+// ✅ Rename to avoid clashing with Next's internal PageProps type
+type ProductPageProps = {
   params: { slug: string };
 };
 
-// Known slugs (no `any` needed)
+// Known slugs
 const SLUGS = ["freyjas-bloom", "duemmens-nectar", "loki-hell-fire"] as const;
 type Slug = typeof SLUGS[number];
 
 function isSlug(s: string): s is Slug {
-  // cast SLUGS to readonly string[] for .includes without 'any'
   return (SLUGS as readonly string[]).includes(s);
 }
 
-// Optional per-product SEO
-export function generateMetadata({ params }: PageProps): Metadata {
+// Optional per-product SEO (safe guards included)
+export function generateMetadata({ params }: ProductPageProps): Metadata {
   if (!isSlug(params.slug)) return { title: "Product | SONCAR" };
   const p = getProduct(params.slug as Product["slug"]);
   if (!p) return { title: "Product not found | SONCAR" };
@@ -34,9 +33,8 @@ export function generateMetadata({ params }: PageProps): Metadata {
   };
 }
 
-export default function ProductPage({ params }: PageProps) {
+export default function ProductPage({ params }: ProductPageProps) {
   if (!isSlug(params.slug)) return notFound();
-
   const p = getProduct(params.slug as Product["slug"]);
   if (!p) return notFound();
 
