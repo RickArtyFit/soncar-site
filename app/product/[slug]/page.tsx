@@ -3,20 +3,17 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getProduct, type Product } from "@/lib/products";
 
-// Accept what Next passes (string) and narrow safely.
-type ProductPageProps = { params: { slug: string } };
-
+// Known slugs
 const SLUGS = ["freyjas-bloom", "duemmens-nectar", "loki-hell-fire"] as const;
 type Slug = typeof SLUGS[number];
+const isSlug = (s: unknown): s is Slug =>
+  typeof s === "string" && (SLUGS as readonly string[]).includes(s);
 
-function isSlug(s: string): s is Slug {
-  return (SLUGS as readonly string[]).includes(s);
-}
+export default function ProductPage({ params }: any) {
+  const slug = params?.slug;
+  if (!isSlug(slug)) return notFound();
 
-export default function ProductPage({ params }: ProductPageProps) {
-  if (!isSlug(params.slug)) return notFound();
-
-  const p = getProduct(params.slug as Product["slug"]);
+  const p = getProduct(slug as Product["slug"]);
   if (!p) return notFound();
 
   return (
